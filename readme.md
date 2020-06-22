@@ -56,12 +56,12 @@ menerapkan konsep MVC di dalam Express ini.
 Misalkan dalam pembelajaran ini kita akan membuat sebuah aplikasi sederhana 
 untuk membaca dan menampilkan product dan memiliki beberapa endpoint:
 
-| Endpoint      | Description                             |
-| ------------- | --------------------------------------- |
-| GET /         | Tampilkan "Hello World"                 |
-| GET /user     | Tampilkan "Logged In"                   |
-| GET /prod     | Tampilkan list produk dalam tabel       |
-| GET /prod/:id | Tampilkan produk yang dicari (OPTIONAL) |
+| Endpoint       | Description                             |
+| -------------- | --------------------------------------- |
+| GET /          | Tampilkan "Hello World"                 |
+| GET /users     | Tampilkan "Logged In"                   |
+| GET /prods     | Tampilkan list produk dalam tabel       |
+| GET /prods/:id | Tampilkan produk yang dicari (OPTIONAL) |
 
 Diberikan juga data awal berupa file dengan ekstensi json yang terdapat pada 
 `data/products.json`.
@@ -98,20 +98,24 @@ const PORT = 3000;
 // Gunakan view engine ejs
 app.set('view engine', 'ejs');
 
+// Jangan lupa tambahkan urlencoded apabila kita ingin menggunakan
+// form
+app.use(express.urlencoded({ extended: false }));
+
 // Untuk `GET /`
 app.get('/', (req, res) => {
   // Logic here
 });
 
-app.get('/user', (req, res) => {
+app.get('/users', (req, res) => {
   // Logic here
 });
 
-app.get('/prod', (req, res) => {
+app.get('/prods', (req, res) => {
   // Logic here
 });
 
-app.get('/prod/:id', (req, res) => {
+app.get('/prods/:id', (req, res) => {
   // Logic here
 });
 
@@ -367,8 +371,8 @@ app.get('/', (req, res) => {
   Controller.getRootHandler(req, res);
 });
 
-app.get('/user', (req, res) => {
-  // GET /user handler para Controller
+app.get('/users', (req, res) => {
+  // GET /users handler para Controller
   Controller.getUserHandler(req, res);
 });
 
@@ -379,8 +383,8 @@ app.get('/user', (req, res) => {
 // kemudian di dalam nya kita memanggil fungsi
 // yang juga menerima req dan res juga
 // Kita bisa mempersingkat hal itu dengan ...
-app.get('/prod', Controller.getProductList);
-app.get('/prod/:id', Controller.getProductSpecific);
+app.get('/prods', Controller.getProductList);
+app.get('/prods/:id', Controller.getProductSpecific);
 
 app.listen(PORT, () => {
   console.log(`Hello apps @ localhost:${PORT}`);
@@ -432,17 +436,17 @@ cara pengkotak-kotakan rute nya?
 
 Umumnya pengkotakan rute ini adalah berdasarkan `resource` yang digunakan,
 misalnya pada aplikasi yang kita buat sebelumnya, pengkotakan ini adalah
-berdasarkan, pada saat ingin menggunakan `user` maka routesnya adalah `user`,
-kemudian pada saat ingin menggunakan `product` maka routesnya adalah `product`,
-dan sisanya (non resource) akan kita handle sebagai utama atau `index`
+berdasarkan, pada saat ingin menggunakan `user` maka routesnya adalah `users`,
+kemudian pada saat ingin menggunakan `product` maka routesnya adalah `products`,
+dan semuanya itu akan kita gabungkan dalam sebuah rute utama bernama `index`
 
 Maka berdasarkan ini, kita bisa membagi menjadi 3 rute besar:
-* `root` atau `index`
-* `user`
-* `product`
+* `index`
+* `users`
+* `products`
 
 Sehingga pada folder `routes`, kita akan membuat 3 rute utama tersebut,
-`index.js`, `user.js`, dan `product.js`
+`index.js`, `users.js`, dan `products.js`
 
 ### Langkah 3 - Menggunakan express.Router pada routes/index.js
 Sekarang kita akan menggunakan express.Router pada ketiga file tersebut.
@@ -488,13 +492,13 @@ app.set('view engine', 'ejs');
 // Menjadi ...
 app.use('/', index);
 
-app.get('/user', (req, res) => {
+app.get('/users', (req, res) => {
   Controller.getUserHandler(req, res);
 });
 
-app.get('/prod', Controller.getProductList);
+app.get('/prods', Controller.getProductList);
 
-app.get('/prod/:id', Controller.getProductSpecific);
+app.get('/prods/:id', Controller.getProductSpecific);
 
 app.listen(PORT, () => {
   console.log(`Hello apps @ localhost:${PORT}`);
@@ -508,10 +512,10 @@ Jalankan dan kita coba lihat hasilnya !
 ### Langkah 5 - Menggunakan express.Router pada routes/user.js
 Bagaimana untuk routes user ?
 
-Berikut adalah kode untuk `routes/user.js`
+Berikut adalah kode untuk `routes/users.js`
 
 ```javascript
-// -- FILE: routes/user.js
+// -- FILE: routes/users.js
 const express = require('express');
 const router = express.Router();
 
@@ -529,9 +533,9 @@ module.exports = router;
 ```
 
 ### Langkah 6 - Modifikasi app.js
-Sekarang setelah kita membuat `routes/user.js` dengan segala kebingungan
+Sekarang setelah kita membuat `routes/users.js` dengan segala kebingungan
 yang ada, kita akan mencoba untuk memodifikasi `app.js` lagi untuk rute
-`/user`
+`/users`
 
 ```javascript
 const express = require('express');
@@ -541,7 +545,7 @@ const Controller = require('./controllers/controller.js');
 
 const index = require('./routes/index.js');
 // Di sini kita akan import rute user
-const user = require('./routes/user.js');
+const user = require('./routes/users.js');
 
 const PORT = 3000;
 
@@ -550,29 +554,29 @@ app.set('view engine', 'ejs');
 app.use('/', index);
 
 // Kita sekarang akan mengganti ini
-// app.get('/user', (req, res) => {
+// app.get('/users', (req, res) => {
 //   Controller.getUserHandler(req, res);
 // });
 
 // Menjadi
-app.use('/user', user);
+app.use('/users', user);
 
-app.get('/prod', Controller.getProductList);
+app.get('/prods', Controller.getProductList);
 
-app.get('/prod/:id', Controller.getProductSpecific);
+app.get('/prods/:id', Controller.getProductSpecific);
 
 app.listen(PORT, () => {
   console.log(`Hello apps @ localhost:${PORT}`);
 });
 ```
 
-Perhatikan bahwa pada saat menggunakan rute `user` kita menambahkan path rute
-menjadi `/user` sehingga pada saat memanggil rute `/user` ditambah `/` pada 
-`routes/user.js` alias menjadi `/user/` maka akan dipanggil 
+Perhatikan bahwa pada saat menggunakan rute `users` kita menambahkan path rute
+menjadi `/users` sehingga pada saat memanggil rute `/users` ditambah `/` pada 
+`routes/users.js` alias menjadi `/users/` maka akan dipanggil 
 `Controller.getUserHandler`
 
-### Langkah 7 - Mengunakan express.router pada routes/product.js
-Sekarang bagaimana dengan si `routes/product.js` ?
+### Langkah 7 - Mengunakan express.router pada routes/products.js
+Sekarang bagaimana dengan si `routes/products.js` ?
 
 Mari kita coba mengkodekannya !
 
@@ -595,8 +599,8 @@ router.get('/:id', Controller.getProductSpecific);
 module.exports = router;
 ```
 
-Perhatikan bahwa sama dengan `routes/user.js` kita tidak menambahkan endpoint
-`/product` pada routes, karena akan ditambahkan pada `app.js`
+Perhatikan bahwa sama dengan `routes/users.js` kita tidak menambahkan endpoint
+`/products` pada routes, karena akan ditambahkan pada `app.js`
 
 ### Langkah 8 - Modifikasi app.js
 Sekarang kita akan memodifikasi `app.js` untuk terakhir kalinya.
@@ -608,9 +612,9 @@ const app = express();
 const Controller = require('./controllers/controller.js');
 
 const index = require('./routes/index.js');
-const user = require('./routes/user.js');
-// Di sini kita akan import rute product
-const product = require('./routes/product.js');
+const users = require('./routes/users.js');
+// Di sini kita akan import rute products
+const products = require('./routes/products.js');
 
 
 const PORT = 3000;
@@ -619,14 +623,14 @@ app.set('view engine', 'ejs');
 
 app.use('/', index);
 
-app.use('/user', user);
+app.use('/user', users);
 
 // Kita akan mengganti ini
-// app.get('/prod', Controller.getProductList);
-// app.get('/prod/:id', Controller.getProductSpecific);
+// app.get('/prods', Controller.getProductList);
+// app.get('/prods/:id', Controller.getProductSpecific);
 
 // Menjadi
-app.use('/prod', product);
+app.use('/prods', products);
 
 app.listen(PORT, () => {
   console.log(`Hello apps @ localhost:${PORT}`);
@@ -646,8 +650,8 @@ Perhatikan bahwa struktur folder akhir kita akan menjadi:
 │   └── ...
 ├── routes
 │   ├── index.js
-│   ├── product.js
-│   └── user.js
+│   ├── products.js
+│   └── users.js
 ├── views
 │   └── product-list.ejs
 ├── app.js

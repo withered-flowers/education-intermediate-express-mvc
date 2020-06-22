@@ -8,14 +8,18 @@ const PORT = 3000;
 // Gunakan view engine ejs
 app.set('view engine', 'ejs');
 
+// Jangan lupa tambahkan urlencoded apabila kita ingin menggunakan
+// form
+app.use(express.urlencoded({ extended: false }));
+
 // Untuk `GET /`
 app.get('/', (req, res) => {
   // GET / handler pada Controller
   Controller.getRootHandler(req, res);
 });
 
-app.get('/user', (req, res) => {
-  // GET /user handler para Controller
+app.get('/users', (req, res) => {
+  // GET /users handler para Controller
   Controller.getUserHandler(req, res);
 });
 
@@ -26,9 +30,9 @@ app.get('/user', (req, res) => {
 // kemudian di dalam nya kita memanggil fungsi
 // yang juga menerima req dan res juga
 // Kita bisa mempersingkat hal itu dengan ...
-app.get('/prod', Controller.getProductList);
+app.get('/prods', Controller.getProductList);
 
-app.get('/prod/:id', Controller.getProductSpecific);
+app.get('/prods/:id', Controller.getProductSpecific);
 
 app.listen(PORT, () => {
   console.log(`Hello apps @ localhost:${PORT}`);
