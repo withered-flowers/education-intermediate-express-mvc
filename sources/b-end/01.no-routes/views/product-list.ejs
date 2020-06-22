@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
+  <!-- 
+    Ingat struktur tabel
+    table
+      thead
+        tr
+          th
+      tbody 
+        tr
+          td
+  -->
+
+  <!-- 
+    15.
+    Perhatikan di file ini kita membutuhkan 2 value yang didefine yah
+    title untuk tulisan judul
+    dataProduct untuk value yang akan ditampilkan pada tabel
+
+    16. 
+    Setelah membuat ini semua
+    Kembali ke file controllers/controller.js
+  -->
+  <table>
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>name</th>
+        <th>price</th>
+        <th>desc</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% dataProduct.forEach(elem => { %> 
+        <tr>
+          <td><%= elem.id %></td>
+          <td><%= elem.name %></td>
+          <td><%= elem.price %></td>
+          <td><%= elem.desc %></td>
+        </tr>  
+      <% }) %>
+    </tbody>
+  </table>
+</body>
+</html>
