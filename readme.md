@@ -427,7 +427,236 @@ Buatlah sebuah folder untuk menampung seluruh macam rute yang ada, umumnya
 dalam folder yang bernama `routes`.
 
 ### Langkah 2 - Pengkotakan atau Pemisahan rute
+Setelah membuat folder `routes`, sekarang kita harus berpikir, bagaimanakah
+cara pengkotak-kotakan rute nya?
 
+Umumnya pengkotakan rute ini adalah berdasarkan `resource` yang digunakan,
+misalnya pada aplikasi yang kita buat sebelumnya, pengkotakan ini adalah
+berdasarkan, pada saat ingin menggunakan `user` maka routesnya adalah `user`,
+kemudian pada saat ingin menggunakan `product` maka routesnya adalah `product`,
+dan sisanya (non resource) akan kita handle sebagai utama atau `index`
+
+Maka berdasarkan ini, kita bisa membagi menjadi 3 rute besar:
+* `root` atau `index`
+* `user`
+* `product`
+
+Sehingga pada folder `routes`, kita akan membuat 3 rute utama tersebut,
+`index.js`, `user.js`, dan `product.js`
+
+### Langkah 3 - Menggunakan express.Router pada routes/index.js
+Sekarang kita akan menggunakan express.Router pada ketiga file tersebut.
+
+Caranya adalah dengan menuliskan kode sebagai berikut:
+```javascript
+// -- FILE: routes/index.js
+const express = require('express');
+const router = express.Router();
+
+// Jangan lupa untuk memanggil controller
+const Controller = require('../controllers/controller.js');
+
+// gunakan router.blablabla
+// seperti kita menggunakan app.blablabla
+router.get('/', Controller.getRootHandler());
+
+module.exports = router;
+```
+
+### Langkah 4 - Modifikasi app.js
+Sekarang setelah kita menambahkan rute via `express.Router`, kita akan 
+menggunakannya dengan cara memodifikasi `app.js`
+
+```javascript
+const express = require('express');
+const app = express();
+
+const Controller = require('./controllers/controller.js');
+
+// Di sini kita akan import rute yang terpisah
+const index = require('./routes/index.js');
+
+const PORT = 3000;
+
+app.set('view engine', 'ejs');
+
+// Kita akan mengganti ini
+// app.get('/', (req, res) => {
+//   Controller.getRootHandler(req, res);
+// });
+
+// Menjadi ...
+app.use('/', index);
+
+app.get('/user', (req, res) => {
+  Controller.getUserHandler(req, res);
+});
+
+app.get('/prod', Controller.getProductList);
+
+app.get('/prod/:id', Controller.getProductSpecific);
+
+app.listen(PORT, () => {
+  console.log(`Hello apps @ localhost:${PORT}`);
+});
+```
+
+Perhatikan bahwa kita me-`require` si rute index dan `menggunakan`-nya.
+
+Jalankan dan kita coba lihat hasilnya !
+
+### Langkah 5 - Menggunakan express.Router pada routes/user.js
+Bagaimana untuk routes user ?
+
+Berikut adalah kode untuk `routes/user.js`
+
+```javascript
+// -- FILE: routes/user.js
+const express = require('express');
+const router = express.Router();
+
+// Jangan lupa untuk memanggil controller
+const Controller = require('../controllers/controller.js');
+
+// Nah untuk endpoint yang kita inginkan 
+// adalah untuk /user
+// maka untuk router.get nya BUKAN /user melainkan / saja
+// Untuk lebih lanjutnya dapat diketahui pada saat kita melihat
+// app.js nanti
+router.get('/', Controller.getUserHandler);
+
+module.exports = router;
+```
+
+### Langkah 6 - Modifikasi app.js
+Sekarang setelah kita membuat `routes/user.js` dengan segala kebingungan
+yang ada, kita akan mencoba untuk memodifikasi `app.js` lagi untuk rute
+`/user`
+
+```javascript
+const express = require('express');
+const app = express();
+
+const Controller = require('./controllers/controller.js');
+
+const index = require('./routes/index.js');
+// Di sini kita akan import rute user
+const user = require('./routes/user.js');
+
+const PORT = 3000;
+
+app.set('view engine', 'ejs');
+
+app.use('/', index);
+
+// Kita sekarang akan mengganti ini
+// app.get('/user', (req, res) => {
+//   Controller.getUserHandler(req, res);
+// });
+
+// Menjadi
+app.use('/user', user);
+
+app.get('/prod', Controller.getProductList);
+
+app.get('/prod/:id', Controller.getProductSpecific);
+
+app.listen(PORT, () => {
+  console.log(`Hello apps @ localhost:${PORT}`);
+});
+```
+
+Perhatikan bahwa pada saat menggunakan rute `user` kita menambahkan path rute
+menjadi `/user` sehingga pada saat memanggil rute `/user` ditambah `/` pada 
+`routes/user.js` alias menjadi `/user/` maka akan dipanggil 
+`Controller.getUserHandler`
+
+### Langkah 7 - Mengunakan express.router pada routes/product.js
+Sekarang bagaimana dengan si `routes/product.js` ?
+
+Mari kita coba mengkodekannya !
+
+```javascript
+// -- FILE: routes/product.js
+const express = require('express');
+const router = express.Router();
+
+// Jangan lupa untuk memanggil controller
+const Controller = require('../controllers/controller.js');
+
+// gunakan router.blablabla
+// seperti kita menggunakan app.blablabla
+
+// Ingat bahwa di sini kita tidak menggunakan tulisan /product ...
+// lagi karena akan dihandle penambahan rutenya di app.js
+router.get('/', Controller.getProductList);
+router.get('/:id', Controller.getProductSpecific);
+
+module.exports = router;
+```
+
+Perhatikan bahwa sama dengan `routes/user.js` kita tidak menambahkan endpoint
+`/product` pada routes, karena akan ditambahkan pada `app.js`
+
+### Langkah 8 - Modifikasi app.js
+Sekarang kita akan memodifikasi `app.js` untuk terakhir kalinya.
+
+```javascript
+const express = require('express');
+const app = express();
+
+const Controller = require('./controllers/controller.js');
+
+const index = require('./routes/index.js');
+const user = require('./routes/user.js');
+// Di sini kita akan import rute product
+const product = require('./routes/product.js');
+
+
+const PORT = 3000;
+
+app.set('view engine', 'ejs');
+
+app.use('/', index);
+
+app.use('/user', user);
+
+// Kita akan mengganti ini
+// app.get('/prod', Controller.getProductList);
+// app.get('/prod/:id', Controller.getProductSpecific);
+
+// Menjadi
+app.use('/prod', product);
+
+app.listen(PORT, () => {
+  console.log(`Hello apps @ localhost:${PORT}`);
+});
+```
+
+Perhatikan bahwa struktur folder akhir kita akan menjadi:
+```
+.
+├── controllers
+│   └── controller.js
+├── data
+│   └── products.json
+├── models
+│   └── product.js
+├── node_modules
+│   └── ...
+├── routes
+│   ├── index.js
+│   ├── product.js
+│   └── user.js
+├── views
+│   └── product-list.ejs
+├── app.js
+├── package.json
+└── package-lock.json
+```
+
+Selamat ! kita sudah berhasil menerapkan MVC Express dan Router sampai di 
+sini !
 
 ## Referensi
 [ExpressJS - Router Documentation](https://expressjs.com/en/guide/routing.html)
