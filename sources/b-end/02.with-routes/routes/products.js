@@ -1,4 +1,4 @@
-// -- FILE: routes/product.js
+// -- FILE: routes/products.js
 const express = require('express');
 const router = express.Router();
 
@@ -9,7 +9,7 @@ const Controller = require('../controllers/controller.js');
 // seperti kita menggunakan app.blablabla
 
 // Ingat bahwa di sini kita tidak menggunakan tulisan /product ...
-// lagi karena akan dihandle penambahan rutenya di app.js
+// lagi karena akan dihandle penambahan rutenya di routes/index.js
 router.get('/', Controller.getProductList);
 router.get('/:id', Controller.getProductSpecific);
 

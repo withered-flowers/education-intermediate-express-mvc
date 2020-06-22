@@ -1,4 +1,4 @@
-// -- FILE: routes/user.js
+// -- FILE: routes/users.js
 const express = require('express');
 const router = express.Router();
 
@@ -6,10 +6,10 @@ const router = express.Router();
 const Controller = require('../controllers/controller.js');
 
 // Nah untuk endpoint yang kita inginkan 
-// adalah untuk /user
+// adalah untuk /users
 // maka untuk router.get nya BUKAN /user melainkan / saja
 // Untuk lebih lanjutnya dapat diketahui pada saat kita melihat
-// app.js nanti
+// routes/index.js nanti
 router.get('/', Controller.getUserHandler);
 
 module.exports = router;
