@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
+  <form action="/prods/edit/<%= dataProduct.id %>" method="post">
+    <input type="text" name="name" id="name" value="<%= dataProduct.name %>" />
+    <input type="text" name="price" id="price" value="<%= dataProduct.price %>" />
+    <input type="text" name="desc" id="desc" value="<%= dataProduct.desc %>" />
+    <button type="submit">Update</button>
+  </form>
+</body>
+</html>

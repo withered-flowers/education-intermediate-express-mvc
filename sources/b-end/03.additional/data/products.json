@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Tasty Rubber Shoes",
+    "price": "67.00",
+    "desc": "Chairs"
+  },
+  {
+    "id": 2,
+    "name": "Incredible Granite Shoes",
+    "price": "123.00",
+    "desc": "Car"
+  },
+  {
+    "id": 3,
+    "name": "Incredible Cotton Bacon",
+    "price": "126.00",
+    "desc": "Tuna"
+  },
+  {
+    "id": 4,
+    "name": "Tasty Steel Soap",
+    "price": "191.00",
+    "desc": "Keyboard"
+  },
+  {
+    "id": 5,
+    "name": "Handmade Steel Car",
+    "price": "544.00",
+    "desc": "Bike"
+  },
+  {
+    "id": 6,
+    "name": "Intelligent Granite Chips",
+    "price": "243.00",
+    "desc": "Keyboard"
+  },
+  {
+    "id": 7,
+    "name": "Handcrafted Rubber Fish",
+    "price": "87.00",
+    "desc": "Tuna"
+  },
+  {
+    "id": 8,
+    "name": "Handmade Plastic Gloves",
+    "price": "107.00",
+    "desc": "Computer"
+  },
+  {
+    "id": 9,
+    "name": "Licensed Wooden Ball",
+    "price": "760.00",
+    "desc": "Shirt"
+  },
+  {
+    "id": 10,
+    "name": "Gorgeous Metal Computer",
+    "price": "337.00",
+    "desc": "Sausages"
+  }
+]

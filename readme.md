@@ -3,6 +3,7 @@
 1. [Recap Express](#recap-express)
 1. [Let's Combine Express with MVC](#lets-combine-express-with-mvc)
 1. [Postlude - Router](#postlude---router)
+1. [Additional - Optional with Quirks](#additional---optional-with-quirks)
 1. [Referensi](#referensi)
 
 ## Recap MVC
@@ -355,16 +356,8 @@ Setelah ini selesai ditulis, maka kita akan memodifikasi `app.js` agar
 kode dapat dicoba dijalankan.
 
 ```javascript
-const express = require('express');
-const app = express();
-
-const Controller = require('./controllers/controller.js');
-
-const PORT = 3000;
-
-// Gunakan view engine ejs
-app.set('view engine', 'ejs');
-
+// --FILE: app.js
+...
 // Untuk `GET /`
 app.get('/', (req, res) => {
   // GET / handler pada Controller
@@ -597,6 +590,526 @@ Perhatikan bahwa struktur folder akhir kita akan menjadi:
 
 Selamat ! kita sudah berhasil menerapkan MVC Express dan Router sampai di 
 sini !
+
+## Additional - Optional with Quirks
+Mari kita mencoba menyelesaikan additional dengan tambahan rute seperti ini:
+
+| Endpoint             | Description                             |
+| -------------------- | --------------------------------------- |
+| GET /                | Tampilkan "Hello World"                 |
+| GET /users           | Tampilkan "Logged In"                   |
+| GET /prods           | Tampilkan list produk dalam tabel       |
+| GET /prods/:id       | Tampilkan produk yang dicari            |
+| GET /prods/add       | Tampilkan halaman penambahan produk     |
+| POST /prods/add      | Handle form penambahan produk           |
+| GET /prods/edit/:id  | Tampilkan detil data yang akan diganti  |
+| POST /prods/edit/:id | Handle form perubahan produk            |
+| GET /prods/del/:id   | Handle penghapusan data produk          |
+
+### Langkah 1 - Menyelesaikan GET /prods/:id
+Mari kita buka kembali `models/product.js` untuk menambahkan fitur untuk
+`filter` agar dapat digunakan oleh Controller pada endpoint `GET /prods/:id`
+
+```javascript
+// -- FILE: product.js
+const fs = require('fs');
+
+class Product {
+  ...
+  // untuk Endpoint GET /prods/:id
+  // menerima parameter id dan callback untuk return value
+  static readSpecific(id, callback) {
+    // Untuk mempersingkat waktu, kita menggunakan readAll()
+    // ingat bahwa readAll memiliki callback yang memiliki 2 parameter
+    // err <-- untuk error
+    // res <-- untuk output
+    this.readAll((err, res) => {
+      if(err) {
+        callback(err, null);
+      }
+      else {
+        // res = data dari readAll
+        console.log(res);
+
+        res = res.filter(elem => {
+          return elem.id === Number(id);
+        });
+
+        // Data tidak ditemukan
+        if(res.length == 0) {
+          callback("Data tidak ditemukan", null);
+        }
+        else {
+          callback(null, res);
+        }
+      }
+    });
+  }
+}
+
+module.exports = Product;
+```
+
+Selanjutnya kita akan memodifikasi file `controllers/controller.js` dan
+mengganti method `getProductSpecific`
+
+```javascript
+// -- File : controller.js
+const Product = require('../models/product.js');
+
+class Controller {
+  ...
+  static getProductSpecific(req, res) {
+    // Sekarang kita implementasikan ini
+
+    // kita akan mengambil si id dari parameter yang sudah didefine
+    // ingat bahwa req.params semuanya adalah string / array
+    // Konversi ke number
+    let idInput = Number(req.params.id);
+    Product.readSpecific(idInput, (err, result) => {
+      if(err) {
+        res.send(err);
+      }
+      else {
+        res.render('product-list', {
+          title: "Product List Specific",
+          dataProduct: result
+        });
+      }
+    });
+  }
+  ...
+}
+
+module.exports = Controller;
+```
+
+### Langkah 2 - Mengimplementasikan GET & POST /prods/add
+Sekarang kita akan menambahkan endpoint `GET` dan `POST` `/prods/add`. Karena
+semua penambahan rute terjadi di routes, dan ini berhubungan dengan product,
+maka kita akan:
+* menambahkan view `product-add.ejs`
+* menambahkan method pada `model/product.ejs` untuk menambahkan data dalam
+  file `product.json` dengan nama method `addData`
+* menambahkan 2 method baru pada `controllers/controller.js` yaitu method 
+  `getProductAddHandler` dan `postProductAddHandler`
+* mengedit file `routes/products.js`  untuk menambahkan endpoint `GET` dan
+  `POST` untuk `/prods/add`
+
+Penambahan file `views/product-add.ejs` dengan kodenya adalah sebagai berikut:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
+  <form action="/prods/add" method="post">
+    <input type="text" name="name" id="name" />
+    <input type="text" name="price" id="price" />
+    <input type="text" name="desc" id="desc" />
+    <button type="submit">Add</button>
+  </form>
+</body>
+</html>
+```
+
+Selanjutnya kita akan menambahkan method pada `models/product.js` untuk
+penambahan data, dengan nama method `addData`.
+
+Kodenya adalah sebagai berikut:
+```javascript
+// -- FILE: product.js
+const fs = require('fs');
+
+class Product {
+  ...
+
+  // Untuk POST /prods/add
+  // Menerima 2 Parameter
+  // objProduct = Object Product yang akan ditambahkan
+  // callback = parameter kembalian
+  //   menerima 2 parameter, err dan result
+  static addData(objProduct, callback) {
+    this.readAll((err, res) => {
+      if (err) {
+        callback(err, null);
+      }
+      else {
+        // Fetch max id
+        let maxId = Number(res[res.length - 1].id) + 1;
+
+        let newProduct = new Product(
+          maxId,
+          objProduct.name,
+          objProduct.price,
+          objProduct.desc
+        );
+
+        res.push(newProduct);
+
+        fs.writeFile(
+          './data/products.json', 
+          JSON.stringify(res, null, 2),
+          (err) => {
+            if(err) {
+              callback(err, null);
+            }
+            else {
+              callback(null, null);
+            }
+          }
+        );
+      }
+    });
+  }
+}
+
+module.exports = Product;
+```
+
+Selanjutnya adalah kita akan melakukan penambahan method pada file
+`controllers/controller.js` dengan nama `getProductAddHandler` dan
+`postProductAddHandler`
+
+```javascript
+// -- File : controller.js
+const Product = require('../models/product.js');
+
+class Controller {
+  ...
+  // method GET /prods/add
+  // Tampilkan halaman views/product-add.ejs
+  static getProductAddHandler(req, res) {
+    res.render('product-add', {
+      title: "Product Add"
+    });
+  }
+
+  // method POST /prods/add
+  // Menambahkan data 
+  static postProductAddHandler(req, res) {
+    // Buat objectProduct berdasarkan data dari form
+    let objProduct = {
+      name: req.body.name,
+      price: req.body.price,
+      desc: req.body.desc
+    };
+
+    // Kirimkan ke models/product.js method addData
+    Product.addData(objProduct, (err, result) => {
+      if(err) {
+        res.send(err);
+      }
+      else {
+        res.redirect('/prods');
+      }
+    });
+  }
+}
+
+module.exports = Controller;
+```
+
+Selanjutnya adalah kita akan menambahkan rute pada `routes/products.js`
+
+```javascript
+// -- FILE: routes/products.js
+const express = require('express');
+const router = express.Router();
+
+const Controller = require('../controllers/controller.js');
+
+router.get('/', Controller.getProductList);
+
+// Penambahan rute untuk penambahan product (get dan post)
+router.get('/add', Controller.getProductAddHandler);
+router.post('/add', Controller.postProductAddHandler);
+
+// Ingat posisi menentukan prestasi
+router.get('/:id', Controller.getProductSpecific);
+
+module.exports = router;
+```
+
+### Langkah 4 - Mengimplementasikan GET & POST /prods/edit/:id
+Sekarang kita akan menambahkan endpoint `GET` dan `POST` `/prods/edit/:id`. 
+Karena semua penambahan rute terjadi di routes, dan ini berhubungan dengan 
+product lagi, maka kita akan:
+* menambahkan view `product-edit.ejs`
+* menambahkan method pada `model/product.ejs` untuk mengedit data dalam
+  file `product.json` dengan nama method `editData`
+* menambahkan 2 method baru pada `controllers/controller.js` yaitu method 
+  `getProductEditHandler` dan `postProductEditHandler`
+* mengedit file `routes/products.js`  untuk menambahkan endpoint `GET` dan
+  `POST` untuk `/prods/edit/:id`
+
+Penambahan file `views/product-add.ejs` dengan kodenya adalah sebagai berikut:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
+  <form action="/prods/edit/<%= dataProduct.id %>" method="post">
+    <input type="text" name="name" id="name" 
+      value="<%= dataProduct.name %>" />
+    <input type="text" name="price" id="price" 
+      value="<%= dataProduct.price %>" />
+    <input type="text" name="desc" id="desc" 
+      value="<%= dataProduct.desc %>" />
+    <button type="submit">Update</button>
+  </form>
+</body>
+</html>
+```
+
+Selanjutnya kita akan menambahkan method pada `models/product.js` untuk
+penambahan data, dengan nama method `editData`.
+
+Kodenya adalah sebagai berikut:
+```javascript
+// -- FILE: product.js
+const fs = require('fs');
+
+class Product {
+  ...
+  // Untuk POST /prods/edit/:id
+  // Menerima 2 Parameter
+  // objProduct = Object Product yang akan ditambahkan
+  // callback = parameter kembalian
+  //   menerima 2 parameter, err dan result
+  static editData(objProduct, callback) {
+    this.readAll((err, res) => {
+      if(err) {
+        callback(err, null);
+      }
+      else {
+        res = res.map(elem => {
+          if(elem.id === objProduct.id) {
+            return new Product(
+              objProduct.id,
+              objProduct.name,
+              objProduct.price,
+              objProduct.desc
+            )
+          }
+        });
+
+        fs.writeFile(
+          './data/products.json', 
+          JSON.stringify(res, null, 2),
+          (err) => {
+            if(err) {
+              callback(err, null);
+            }
+            else {
+              callback(null, null);
+            }
+          }
+        );
+      }
+    });
+}
+
+module.exports = Product;
+```
+
+Selanjutnya adalah kita akan melakukan penambahan method pada file
+`controllers/controller.js` dengan nama `getProductEditHandler` dan
+`postProductEditHandler`
+
+```javascript
+// -- File : controller.js
+const Product = require('../models/product.js');
+
+class Controller {
+  ...
+  // method GET /prods/edit/:id
+  // Tampilkan halaman views/product-edit.ejs
+  static getProductEditHandler(req, res) {
+    let idInput = req.params.id;
+
+    Product.readSpecific(idInput, (err, result) => {
+      if(err) {
+        res.send(err);
+      }
+      else {
+        res.render('product-edit', {
+          title: "Product Update",
+          dataProduct: result[0]
+        });
+      }
+    });
+  }
+
+  // method POST /prods/edit/:id
+  // Mengedit data
+  static postProductEditHandler(req, res) {
+    let idInput = Number(req.params.id);
+
+    let objProduct = {
+      id: idInput,
+      name: req.body.name,
+      price: req.body.price,
+      desc: req.body.desc
+    };
+
+    Product.editData(objProduct, (err, result) => {
+      if(err) {
+        res.send(err);
+      }
+      else {
+        res.redirect('/prods');
+      }
+    });
+  }
+}
+
+module.exports = Controller;
+```
+
+Selanjutnya adalah kita akan menambahkan rute pada `routes/products.js`
+
+```javascript
+// -- FILE: routes/products.js
+const express = require('express');
+const router = express.Router();
+
+const Controller = require('../controllers/controller.js');
+
+router.get('/', Controller.getProductList);
+
+router.get('/add', Controller.getProductAddHandler);
+router.post('/add', Controller.postProductAddHandler);
+
+// Penambahan rute untuk update product (get dan post)
+router.get('/edit/:id', Controller.getProductEditHandler);
+router.post('/edit/:id', Controller.postProductEditHandler);
+
+router.get('/:id', Controller.getProductSpecific);
+
+module.exports = router;
+```
+
+### Langkah 5 - Mengimplementasikan GET /prods/del/:id
+Sekarang kita akan menambahkan endpoint `GET /prods/del/:id`. 
+Dengan asumsi bahwa penghapusan product tidak memiliki UI dan tanpa konfirmasi,
+semua penambahan rute terjadi di routes, dan ini berhubungan dengan 
+product lagi, maka kita akan:
+* menambahkan method pada `model/product.ejs` untuk menghapus data dalam
+  file `product.json` dengan nama method `deleteData`
+* menambahkan sebuah method baru pada `controllers/controller.js` yaitu method 
+  `getProductDeleteHandler`
+* mengedit file `routes/products.js`  untuk menambahkan endpoint 
+  `GET /prods/edit/:id`
+
+Pertama-tama kita akan menambahkan method pada `models/product.js` untuk
+penambahan data, dengan nama method `deleteData`.
+
+```javascript
+// -- FILE: product.js
+const fs = require('fs');
+
+class Product {
+  ...
+
+  // Untuk GET /prods/del/:id
+  // Menerima 2 Parameter
+  // id = id yang akan dihapus
+  // callback = parameter kembalian
+  //   menerima 2 parameter, err dan result
+  static deleteData(id, callback) {
+    this.readAll((err, res) => {
+      if(err) {
+        callback(err, null)
+      }
+      else {
+        res = res.filter((elem) => {
+          return elem.id !== Number(id);
+        });
+
+        fs.writeFile(
+          './data/products.json', 
+          JSON.stringify(res, null, 2),
+          (err) => {
+            if(err) {
+              callback(err, null);
+            }
+            else {
+              callback(null, null);
+            }
+          }
+        );
+      }
+    });
+  }
+}
+
+module.exports = Product;
+```
+
+Selanjutnya kita akan menambahkan method `getProductDeleteHandler` pada file
+`controllers/controller.js`
+
+```javascript
+// -- File : controller.js
+const Product = require('../models/product.js');
+
+class Controller {
+  ...
+  // method GET /prods/del/:id
+  // Menghapus data
+  static getProductDeleteHandler(req, res) {
+    let idInput = Number(req.params.id);
+
+    Product.deleteData(idInput, (err, result) => {
+      if(err) {
+        res.send(err);
+      }
+      else {
+        res.redirect('/prods');
+      }
+    });
+  }
+}
+
+module.exports = Controller;
+```
+
+Kemudian untuk bagian terakhir, kita akan menambahkan rute `/prods/del/:id`
+pada `routes/products.js`
+
+```javascript
+// -- FILE: routes/products.js
+const express = require('express');
+const router = express.Router();
+
+const Controller = require('../controllers/controller.js');
+
+router.get('/', Controller.getProductList);
+
+router.get('/add', Controller.getProductAddHandler);
+router.post('/add', Controller.postProductAddHandler);
+
+router.get('/edit/:id', Controller.getProductEditHandler);
+router.post('/edit/:id', Controller.postProductEditHandler);
+
+// Penambahan rute untuk delete product (get)
+router.get('/del/:id', Controller.getProductDeleteHandler);
+
+router.get('/:id', Controller.getProductSpecific);
+
+module.exports = router;
+```
+
+Selamat sampai di tahap ini artinya kita sudah berhasil untuk membuat CRUD
+pada aplikasi sederhana berbasis Express yang sudah menggunakan pola MVC !
 
 ## Referensi
 [ExpressJS - Router Documentation](https://expressjs.com/en/guide/routing.html)

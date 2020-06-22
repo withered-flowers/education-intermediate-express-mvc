@@ -1,3 +1,18 @@
+/*
+| Endpoint             | Description                             |
+| -------------------- | --------------------------------------- |
+| GET /                | Tampilkan "Hello World"                 |
+| GET /users           | Tampilkan "Logged In"                   |
+| GET /prods           | Tampilkan list produk dalam tabel       |
+------------------------------------------------------------------
+| GET /prods/:id       | Tampilkan produk yang dicari            |
+| GET /prods/add       | Tampilkan halaman penambahan produk     |
+| POST /prods/add      | Handle form penambahan produk           |
+| GET /prods/edit/:id  | Tampilkan detil data yang akan diganti  |
+| POST /prods/edit/:id | Handle form perubahan produk            |
+| GET /prods/del/:id   | Handle penghapusan data produk          |
+*/
+
 const express = require('express');
 const app = express();
 
