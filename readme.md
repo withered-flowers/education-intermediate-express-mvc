@@ -448,69 +448,8 @@ Maka berdasarkan ini, kita bisa membagi menjadi 3 rute besar:
 Sehingga pada folder `routes`, kita akan membuat 3 rute utama tersebut,
 `index.js`, `users.js`, dan `products.js`
 
-### Langkah 3 - Menggunakan express.Router pada routes/index.js
-Sekarang kita akan menggunakan express.Router pada ketiga file tersebut.
-
-Caranya adalah dengan menuliskan kode sebagai berikut:
-```javascript
-// -- FILE: routes/index.js
-const express = require('express');
-const router = express.Router();
-
-// Jangan lupa untuk memanggil controller
-const Controller = require('../controllers/controller.js');
-
-// gunakan router.blablabla
-// seperti kita menggunakan app.blablabla
-router.get('/', Controller.getRootHandler());
-
-module.exports = router;
-```
-
-### Langkah 4 - Modifikasi app.js
-Sekarang setelah kita menambahkan rute via `express.Router`, kita akan 
-menggunakannya dengan cara memodifikasi `app.js`
-
-```javascript
-const express = require('express');
-const app = express();
-
-const Controller = require('./controllers/controller.js');
-
-// Di sini kita akan import rute yang terpisah
-const index = require('./routes/index.js');
-
-const PORT = 3000;
-
-app.set('view engine', 'ejs');
-
-// Kita akan mengganti ini
-// app.get('/', (req, res) => {
-//   Controller.getRootHandler(req, res);
-// });
-
-// Menjadi ...
-app.use('/', index);
-
-app.get('/users', (req, res) => {
-  Controller.getUserHandler(req, res);
-});
-
-app.get('/prods', Controller.getProductList);
-
-app.get('/prods/:id', Controller.getProductSpecific);
-
-app.listen(PORT, () => {
-  console.log(`Hello apps @ localhost:${PORT}`);
-});
-```
-
-Perhatikan bahwa kita me-`require` si rute index dan `menggunakan`-nya.
-
-Jalankan dan kita coba lihat hasilnya !
-
-### Langkah 5 - Menggunakan express.Router pada routes/user.js
-Bagaimana untuk routes user ?
+### Langkah 3 - Menggunakan express.Router pada routes/users.js
+Sekarang kita akan membuat rute `users` terlebih dahulu.
 
 Berikut adalah kode untuk `routes/users.js`
 
@@ -523,65 +462,22 @@ const router = express.Router();
 const Controller = require('../controllers/controller.js');
 
 // Nah untuk endpoint yang kita inginkan 
-// adalah untuk /user
+// adalah untuk /users
 // maka untuk router.get nya BUKAN /user melainkan / saja
 // Untuk lebih lanjutnya dapat diketahui pada saat kita melihat
-// app.js nanti
+// routes/index.js nanti
 router.get('/', Controller.getUserHandler);
 
 module.exports = router;
 ```
 
-### Langkah 6 - Modifikasi app.js
-Sekarang setelah kita membuat `routes/users.js` dengan segala kebingungan
-yang ada, kita akan mencoba untuk memodifikasi `app.js` lagi untuk rute
-`/users`
-
-```javascript
-const express = require('express');
-const app = express();
-
-const Controller = require('./controllers/controller.js');
-
-const index = require('./routes/index.js');
-// Di sini kita akan import rute user
-const user = require('./routes/users.js');
-
-const PORT = 3000;
-
-app.set('view engine', 'ejs');
-
-app.use('/', index);
-
-// Kita sekarang akan mengganti ini
-// app.get('/users', (req, res) => {
-//   Controller.getUserHandler(req, res);
-// });
-
-// Menjadi
-app.use('/users', user);
-
-app.get('/prods', Controller.getProductList);
-
-app.get('/prods/:id', Controller.getProductSpecific);
-
-app.listen(PORT, () => {
-  console.log(`Hello apps @ localhost:${PORT}`);
-});
-```
-
-Perhatikan bahwa pada saat menggunakan rute `users` kita menambahkan path rute
-menjadi `/users` sehingga pada saat memanggil rute `/users` ditambah `/` pada 
-`routes/users.js` alias menjadi `/users/` maka akan dipanggil 
-`Controller.getUserHandler`
-
-### Langkah 7 - Mengunakan express.router pada routes/products.js
+### Langkah 4 - Mengunakan express.router pada routes/products.js
 Sekarang bagaimana dengan si `routes/products.js` ?
 
 Mari kita coba mengkodekannya !
 
 ```javascript
-// -- FILE: routes/product.js
+// -- FILE: routes/products.js
 const express = require('express');
 const router = express.Router();
 
@@ -592,7 +488,7 @@ const Controller = require('../controllers/controller.js');
 // seperti kita menggunakan app.blablabla
 
 // Ingat bahwa di sini kita tidak menggunakan tulisan /product ...
-// lagi karena akan dihandle penambahan rutenya di app.js
+// lagi karena akan dihandle penambahan rutenya di routes/index.js
 router.get('/', Controller.getProductList);
 router.get('/:id', Controller.getProductSpecific);
 
@@ -600,37 +496,77 @@ module.exports = router;
 ```
 
 Perhatikan bahwa sama dengan `routes/users.js` kita tidak menambahkan endpoint
-`/products` pada routes, karena akan ditambahkan pada `app.js`
+`/products` pada routes, karena akan ditambahkan pada `routes/index.js`
 
-### Langkah 8 - Modifikasi app.js
-Sekarang kita akan memodifikasi `app.js` untuk terakhir kalinya.
+### Langkah 5 - Menggunakan express.Router pada routes/index.js
+Sekarang kita akan menggunakan express.Router pada `routes/index.js` dan
+menggabungkan seluruh rute yang ada di sini.
+
+Caranya adalah dengan menuliskan kode sebagai berikut:
+```javascript
+// -- FILE: routes/index.js
+const express = require('express');
+const router = express.Router();
+
+// Jangan lupa untuk memanggil controller
+const Controller = require('../controllers/controller.js');
+
+// Jangan lupa untuk memanggil semua rute di luar index di sini
+const users = require('./users.js');
+const products = require('./products.js');
+
+// gunakan router.blablabla
+// seperti kita menggunakan app.blablabla
+router.get('/', Controller.getRootHandler);
+
+// definisikan rute untuk /users akan menggunakan users
+router.use('/users', users);
+
+// definisikan rute untuk /prods akan menggunakan products
+router.use('/prods', products);
+
+module.exports = router;
+```
+
+Dapat dilihat dari kode di atas bahwa semua rute yang sudah didefinisikan
+(`/users` dan `/products`) ada di dalam `routes/index.js` ini.
+
+Selanjutnya kita akan memodifikasi file `app.js` supaya dapat membaca
+`routes/index.js` ini.
+
+### Langkah 6 - Modifikasi app.js
+Sekarang setelah kita menambahkan rute via `express.Router`, kita akan 
+menggunakannya dengan cara memodifikasi `app.js`
 
 ```javascript
 const express = require('express');
 const app = express();
 
-const Controller = require('./controllers/controller.js');
+// Controller sudah tidak digunakan di sini
+// const Controller = require('./controllers/controller.js');
 
+// Di sini kita akan import rute yang terpisah
 const index = require('./routes/index.js');
-const users = require('./routes/users.js');
-// Di sini kita akan import rute products
-const products = require('./routes/products.js');
-
 
 const PORT = 3000;
 
 app.set('view engine', 'ejs');
 
-app.use('/', index);
+// Kita akan mengganti semuanya
+// app.get('/', (req, res) => {
+//   Controller.getRootHandler(req, res);
+// });
 
-app.use('/user', users);
+// app.get('/users', (req, res) => {
+//   Controller.getUserHandler(req, res);
+// });
 
-// Kita akan mengganti ini
 // app.get('/prods', Controller.getProductList);
+
 // app.get('/prods/:id', Controller.getProductSpecific);
 
 // Menjadi
-app.use('/prods', products);
+app.use('/', index);
 
 app.listen(PORT, () => {
   console.log(`Hello apps @ localhost:${PORT}`);
